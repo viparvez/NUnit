@@ -26,12 +26,16 @@ namespace Sparky.NUnitTest
             string greeting = customer.GreetAndCombineNames("John", "Doe");
 
             // Assert
-            Assert.That(greeting, Is.EqualTo("Hello, John Doe").IgnoreCase);
-            ClassicAssert.AreEqual("Hello, John Doe", greeting);
-            Assert.That(greeting, Does.Contain(","));
-            Assert.That(greeting, Does.StartWith("Hello"));
-            Assert.That(greeting, Does.EndWith("Doe"));
-            Assert.That(greeting, Does.Match("Hello, [A-Z][a-z]+ [A-Z][a-z]+"));
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(greeting, Is.EqualTo("Hello, John Doe").IgnoreCase);
+                ClassicAssert.AreEqual("Hello, John Doe", greeting);
+                Assert.That(greeting, Does.Contain(","));
+                Assert.That(greeting, Does.StartWith("Hello"));
+                Assert.That(greeting, Does.EndWith("Doe"));
+                Assert.That(greeting, Does.Match("Hello, [A-Z][a-z]+ [A-Z][a-z]+"));
+            });
         }
 
         [Test]
@@ -54,6 +58,56 @@ namespace Sparky.NUnitTest
             // Assert
             //ClassicAssert.AreEqual(15, discount);
             Assert.That(discount, Is.InRange(10,25));
+        }
+
+        [Test]
+        public void GreetMessage_GreetedWithoutLastName_ReturnsNotNull()
+        {
+            // Act
+            customer.GreetAndCombineNames("John", null);
+
+            // Assert
+            ClassicAssert.IsNotNull(customer.GreetMessage);
+            ClassicAssert.IsFalse(string.IsNullOrEmpty(customer.GreetMessage));
+        }
+
+        [Test]
+        public void GreetMessage_GreetedWithoutFirstName_ReturnsException()
+        {
+            // Act
+            //customer.GreetAndCombineNames(null, "Doe");
+
+            // Assert
+            var exception = ClassicAssert.Throws<ArgumentException>(() => customer.GreetAndCombineNames(null, "Doe"));
+            ClassicAssert.AreEqual("First name is null or empty", exception.Message);
+
+            //Do the test in one line
+            Assert.That(() => customer.GreetAndCombineNames(null, "Doe"), 
+                Throws.ArgumentException.With.Message.EqualTo("First name is null or empty"));
+        }
+
+        [Test]
+        public void CustomerType_OrderTotalLessThan100_ReturnsBasicCustomer()
+        {
+            // Act
+            customer.OrderTotal = 99;
+            var customerType = customer.GetCustomerType();
+
+            // Assert
+            ClassicAssert.IsInstanceOf<BasicCustomer>(customerType);
+            Assert.That(customerType, Is.TypeOf<BasicCustomer>());
+        }
+
+        [Test]
+        public void CustomerType_OrderTotalGreaterThan100_ReturnsPremiumCustomer()
+        {
+            // Act
+            customer.OrderTotal = 100;
+            var customerType = customer.GetCustomerType();
+
+            // Assert
+            ClassicAssert.IsInstanceOf<PremiumCustomer>(customerType);
+            Assert.That(customerType, Is.TypeOf<PremiumCustomer>());
         }
     }
 }
